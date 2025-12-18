@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 # Use environment variable for API key
-api_key = os.environ.get("OPENROUTER_API_KEY")
+api_key = os.environ.get("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")
 
 if not api_key:
     print("WARNING: OPENROUTER_API_KEY not found!")
