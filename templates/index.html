@@ -3,18 +3,337 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Chatbot</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>ChatGPT</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #343541;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: #ececf1;
+    }
+
+    .header {
+      background: #343541;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .header-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ececf1;
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 16px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ececf1;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .clear-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    #chat-box {
+      flex: 1;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    #chat-box::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #chat-box::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #chat-box::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .welcome-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 40px 20px;
+    }
+
+    .welcome-title {
+      font-size: 32px;
+      font-weight: 400;
+      color: #ececf1;
+      margin-bottom: 40px;
+    }
+
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .example-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .example-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .example-card-title {
+      font-size: 13px;
+      color: #ececf1;
+      line-height: 1.5;
+    }
+
+    .message-row {
+      width: 100%;
+      padding: 24px 0;
+    }
+
+    .message-row.user {
+      background: #343541;
+    }
+
+    .message-row.assistant {
+      background: #444654;
+    }
+
+    .message-content-wrapper {
+      max-width: 768px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 24px;
+    }
+
+    .message-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .message-row.user .message-icon {
+      background: #5c6ac4;
+      color: white;
+    }
+
+    .message-row.assistant .message-icon {
+      background: #19c37d;
+      color: white;
+    }
+
+    .message-text {
+      flex: 1;
+      font-size: 16px;
+      line-height: 1.75;
+      color: #ececf1;
+      word-wrap: break-word;
+    }
+
+    .thinking-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 4px 0;
+    }
+
+    .thinking-dot {
+      width: 8px;
+      height: 8px;
+      background: #8e8ea0;
+      border-radius: 50%;
+      animation: thinking 1.4s infinite;
+    }
+
+    .thinking-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .thinking-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes thinking {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+      }
+      30% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+
+    .input-container {
+      padding: 20px;
+      background: #343541;
+      display: flex;
+      justify-content: center;
+    }
+
+    .input-wrapper {
+      max-width: 768px;
+      width: 100%;
+      position: relative;
+      background: #40414f;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    #user-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #ececf1;
+      font-size: 16px;
+      font-family: inherit;
+      padding: 16px 50px 16px 16px;
+      resize: none;
+      max-height: 200px;
+    }
+
+    #user-input::placeholder {
+      color: #8e8ea0;
+    }
+
+    #send-btn {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      background: #ececf1;
+      color: #343541;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    #send-btn:hover:not(:disabled) {
+      background: #d1d1d6;
+    }
+
+    #send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error-text {
+      color: #ef4444;
+    }
+
+    @media (max-width: 768px) {
+      .message-content-wrapper {
+        padding: 0 16px;
+        gap: 16px;
+      }
+
+      .message-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+      }
+
+      .message-text {
+        font-size: 15px;
+      }
+
+      .examples {
+        grid-template-columns: 1fr;
+      }
+
+      .welcome-title {
+        font-size: 24px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="chat-container">
-    <h1>🤖 AI Chatbot</h1>
-    <div id="chat-box"></div>
-    <div class="input-area">
-      <input type="text" id="user-input" placeholder="Type your question..." />
-      <button id="send-btn">Send</button>
+  <div class="header">
+    <div class="header-title">AI CHAT BOT</div>
+    <button class="clear-btn" onclick="clearChat()">Clear chat</button>
+  </div>
+  
+  <div id="chat-box">
+    <div class="welcome-container">
+      <h1 class="welcome-title">How can I help you today?</h1>
+      <div class="examples">
+        <div class="example-card" onclick="sendExample('Explain quantum computing in simple terms')">
+          <div class="example-card-title">Explain quantum computing in simple terms</div>
+        </div>
+        <div class="example-card" onclick="sendExample('Help me plan a trip to Japan')">
+          <div class="example-card-title">Help me plan a trip to Japan</div>
+        </div>
+        <div class="example-card" onclick="sendExample('Write a Python function to reverse a string')">
+          <div class="example-card-title">Write a Python function to reverse a string</div>
+        </div>
+      </div>
     </div>
   </div>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  
+  <div class="input-container">
+    <div class="input-wrapper">
+      <textarea 
+        id="user-input" 
+        placeholder="Message ChatGPT" 
+        rows="1"
+        autocomplete="off"
+      ></textarea>
+      <button id="send-btn" aria-label="Send message">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <script src="../static/script.js"></script>
 </body>
 </html>
